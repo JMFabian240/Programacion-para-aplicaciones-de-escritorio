@@ -9,7 +9,7 @@ Cada que se saca un boto de la urna, se ingresa el número del candidato.
 Cuando se terminan los votos se ingresa un cero.
 
 
-### **[Entradas y salidas](./Entradas y salidas)**
+### **[Entradas y salidas](./"Entradas y salidas")**
 
 ### **[Excepciones](./Exceptions)**
 
@@ -17,7 +17,7 @@ Cuando se terminan los votos se ingresa un cero.
 
 ### **[Practica 1](./practica1)**
 
-### **[Practica 2](./Practica 2)**
+### **[Practica 2](./"Practica 2")**
 
 ### **[To-do](./to_do)**
  
