@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;">
+    <title> Markdown Editor </title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/1.11.2/simplemde.min.css">
+    <script src="https://cdn.jsdelivr.net/simplemde/1.11.2/simplemde.min.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        #editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        #editor {
+            width: 100%;
+            min-height: 500px;
+        }
+        .CodeMirror {
+            flex: 1;
+            font-size: 16px;
+        }
+        /* Estilos para que el editor ocupe todo el alto disponible */
+        .editor-toolbar {
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+        }
+        .CodeMirror-wrap {
+            border: none !important;
+        }
+    </style>
+</head>
+<body ondrop="dropHandler(event);" ondragover="event.preventDefault();">
+    <div id="editor-container">
+        <textarea id="editor"></textarea>
+    </div>
+
+    <script>
+        // Inicializar el editor de Markdown
+        console.log('Iniciando SimpleMDE...');
+        var editor = new SimpleMDE({
+            element: document.getElementById('editor'),
+            spellChecker: false,
+            autofocus: true,
+            placeholder: "Comienza a escribir aquí tu Markdown...",
+            status: ["lines", "words", "cursor"]
+        });
+        console.log('SimpleMDE inicializado:', editor);
+
+        // Verificación de entorno de Electron
+        if (typeof require !== 'undefined') {
+            try {
+                const { ipcRenderer } = require('electron');
+
+                // Escuchar eventos desde el Proceso Principal (menu.js)
+                ipcRenderer.on('editor-event', (event, arg) => {
+                    console.log('Evento recibido:', arg);
+                    if (arg === 'toggle-bold') {
+                        editor.toggleBold();
+                    }
+                    if (arg === 'save') {
+                        // Enviar el contenido de vuelta para guardar
+                        const content = editor.codemirror.getValue();
+                        console.log('Enviando contenido a guardar:', content.length, 'caracteres');
+                        ipcRenderer.send('save', content);
+                    }
+                });
+
+                // Escuchar carga de archivos
+                ipcRenderer.on('load', (event, content) => {
+                    if (content) {
+                        editor.codemirror.setValue(content);
+                    }
+                });
+
+                // Notificar que la página cargó
+                ipcRenderer.send('editor-reply', 'Page Loaded');
+            } catch (e) {
+                console.error("Error en inicialización de IPC:", e);
+            }
+        } else {
+            console.log("Ejecutando en entorno de navegador (fuera de Electron). Las funciones de archivos locales están desactivadas.");
+        }
+
+        // Soporte de Arrastrar y Soltar (Drag and Drop)
+        function dropHandler(event) {
+            event.preventDefault();
+            if (event.dataTransfer.items && event.dataTransfer.items[0].kind === 'file') {
+                var file = event.dataTransfer.items[0].getAsFile();
+                if (file.name.endsWith('.md') || file.name.endsWith('.txt')) {
+                    var reader = new FileReader();
+                    reader.onload = e => {
+                        editor.codemirror.setValue(e.target.result);
+                    };
+                    reader.readAsText(file);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
